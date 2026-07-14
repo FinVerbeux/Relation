@@ -272,6 +272,7 @@
   .version-item .vi-meta b{color:var(--ink);}
 
   /* ---- outils externes (menu déroulant) ---- */
+  .toolbar-group{display:flex;align-items:center;gap:6px;}
   .tools-dropdown{position:relative;}
   .tools-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:230px;background:var(--panel);
     border:1px solid var(--hairline);border-radius:6px;box-shadow:0 10px 28px rgba(0,0,0,.5);
@@ -284,6 +285,22 @@
   .tools-menu .tm-title{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;
     text-transform:uppercase;color:var(--ink-faint);padding:6px 10px 4px;}
   .tools-menu .tm-sep{height:1px;background:var(--hairline);margin:4px 2px;}
+
+  /* ---- paramètres / raccourcis ---- */
+  .settings-grid{display:grid;gap:12px;}
+  .setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--card);
+    border:1px solid var(--hairline);border-radius:var(--radius);padding:10px 12px;}
+  .setting-row strong{display:block;font-size:12.5px;color:var(--ink);margin-bottom:3px;}
+  .setting-row span{display:block;font-size:11.5px;color:var(--ink-dim);line-height:1.4;}
+  .setting-row input[type="checkbox"]{accent-color:var(--accent);width:17px;height:17px;}
+  .shortcut-list{display:grid;gap:7px;margin-top:10px;}
+  .shortcut-row{display:grid;grid-template-columns:1fr 130px;gap:8px;align-items:center;}
+  .shortcut-row label{font-size:12.5px;color:var(--ink-dim);}
+  .shortcut-input{background:var(--void);border:1px solid var(--hairline);border-radius:var(--radius);color:var(--accent);
+    font-family:var(--font-mono);font-size:11px;padding:7px 8px;text-align:center;cursor:pointer;}
+  .shortcut-input.capturing{border-color:var(--accent);background:var(--accent-soft);}
+  .architecture-note{font-size:11.5px;color:var(--ink-dim);line-height:1.55;background:rgba(201,162,39,.08);
+    border:1px solid rgba(201,162,39,.25);padding:10px 12px;border-radius:var(--radius);margin-top:12px;}
 
   /* ---- bloc-notes flottant (fenêtre façon "bureau") ---- */
   .notepad-window{position:fixed;width:300px;height:260px;min-width:220px;min-height:160px;
@@ -330,11 +347,14 @@
     <button class="icon-btn" id="btnUndo" title="Annuler (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
     <button class="icon-btn" id="btnRedo" title="Rétablir (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
     <button class="icon-btn" id="btnCluster" title="Regrouper visuellement par tag"><i class="fa-solid fa-draw-polygon"></i></button>
-    <div class="tools-dropdown">
-      <button class="icon-btn" id="btnTools" title="Outils OSINT externes"><i class="fa-solid fa-toolbox"></i></button>
-      <div class="tools-menu" id="toolsMenu"></div>
+    <div class="toolbar-group" aria-label="Outils et paramètres">
+      <div class="tools-dropdown">
+        <button class="icon-btn" id="btnTools" title="Outils OSINT externes"><i class="fa-solid fa-toolbox"></i></button>
+        <div class="tools-menu" id="toolsMenu"></div>
+      </div>
+      <button class="icon-btn" id="btnSettings" title="Paramètres et raccourcis"><i class="fa-solid fa-gear"></i></button>
+      <button class="icon-btn" id="btnNotepad" title="Bloc-notes flottant"><i class="fa-solid fa-note-sticky"></i></button>
     </div>
-    <button class="icon-btn" id="btnNotepad" title="Bloc-notes flottant"><i class="fa-solid fa-note-sticky"></i></button>
     <div class="spacer"></div>
     <div class="search-wrap"><input id="search" type="text" placeholder="Rechercher…" spellcheck="false"></div>
     <button class="icon-btn" id="btnFilters" title="Filtres avancés"><i class="fa-solid fa-filter"></i></button>
@@ -409,7 +429,8 @@ const LEGACY_KEY = "dossier-osint-graph-v2";
 const INDEX_KEY = "dossier-osint-index";
 const CASE_PREFIX = "dossier-osint-case-";
 const FORMAT_NAME = "OSINTREE";
-const FORMAT_VERSION = "2.2";
+const FORMAT_VERSION = "2.3";
+const SETTINGS_KEY = "relation-settings-v1";
 let currentCaseId = null;
 
 const TYPES = {
@@ -444,6 +465,36 @@ const EDGE_STATUSES = {
   hypothese: {label:"Hypothèse"},
   exclu:     {label:"Exclu"}
 };
+
+// Registre centralisé : actions, libellés et raccourcis sont déclarés au même endroit
+// afin de garder l'interface, les paramètres et le gestionnaire clavier synchronisés.
+const SHORTCUT_ACTIONS = {
+  addNode:{label:"Ajouter un élément", default:"Ctrl+N"},
+  linkMode:{label:"Mode liaison", default:"Ctrl+L"},
+  deleteSelection:{label:"Supprimer la sélection", default:"Delete"},
+  undo:{label:"Annuler", default:"Ctrl+Z"},
+  redo:{label:"Rétablir", default:"Ctrl+Y"},
+  copy:{label:"Copier", default:"Ctrl+C"},
+  paste:{label:"Coller", default:"Ctrl+V"},
+  search:{label:"Rechercher", default:"Ctrl+F"},
+  fit:{label:"Recentrer", default:"Ctrl+0"},
+  filters:{label:"Filtres", default:"Ctrl+Shift+F"},
+  settings:{label:"Paramètres", default:"Ctrl+,"},
+  cases:{label:"Dossiers", default:"Ctrl+O"},
+  exportJson:{label:"Exporter JSON", default:"Ctrl+E"},
+  reportPdf:{label:"Rapport PDF", default:"Ctrl+Shift+P"},
+  notepad:{label:"Bloc-notes", default:"Ctrl+Shift+N"},
+  cluster:{label:"Regroupement par tag", default:"Ctrl+G"},
+  escape:{label:"Fermer / désélectionner", default:"Escape"}
+};
+
+function defaultSettings(){
+  return {
+    autoLinkAfterCreate:true,
+    smartRelationLabels:true,
+    shortcuts:Object.fromEntries(Object.entries(SHORTCUT_ACTIONS).map(([k,v])=>[k,v.default]))
+  };
+}
 
 // Brand / app icon gallery -- key: fontawesome class
 // Liste des liens "Outils" affichés dans le menu déroulant de la topbar.
@@ -483,6 +534,8 @@ let saveTimer = null;
 let linkMode = false;
 let linkSourceId = null;
 let clusterMode = false;
+let pendingAutoLinkNodeId = null;
+let appSettings = defaultSettings();
 
 let historyStack = [];
 let historyIndex = -1;
@@ -709,6 +762,91 @@ function duplicatesOf(node){
   return nodesArr().filter(n => n.id!==node.id && normVal(n.value)===normVal(node.value));
 }
 function edgesOf(nodeId){ return edgesArr().filter(e=>e.source===nodeId||e.target===nodeId); }
+
+// ---------------- paramètres / architecture applicative ----------------
+async function loadSettings(){
+  const base = defaultSettings();
+  try{
+    const res = await window.storage.get(SETTINGS_KEY, false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      return Object.assign(base, parsed, {shortcuts:Object.assign({}, base.shortcuts, parsed.shortcuts||{})});
+    }
+  }catch(e){ console.warn("Paramètres illisibles, valeurs par défaut utilisées", e); }
+  return base;
+}
+async function saveSettings(){
+  try{ await window.storage.set(SETTINGS_KEY, JSON.stringify(appSettings), false); }catch(e){ console.error(e); }
+}
+function shortcutLabel(action){ return (appSettings.shortcuts && appSettings.shortcuts[action]) || SHORTCUT_ACTIONS[action].default; }
+function normalizeShortcut(ev){
+  const parts = [];
+  if(ev.ctrlKey || ev.metaKey) parts.push("Ctrl");
+  if(ev.shiftKey) parts.push("Shift");
+  if(ev.altKey) parts.push("Alt");
+  let key = ev.key;
+  if(key === " ") key = "Space";
+  else if(key.length === 1) key = key.toUpperCase();
+  else key = key[0].toUpperCase() + key.slice(1);
+  if(["Control","Shift","Alt","Meta"].includes(key)) return "";
+  parts.push(key);
+  return parts.join("+");
+}
+function eventMatchesShortcut(ev, shortcut){ return normalizeShortcut(ev) === shortcut; }
+function isEditableTarget(){
+  const tag = (document.activeElement && document.activeElement.tagName) || "";
+  return tag==="INPUT" || tag==="TEXTAREA" || tag==="SELECT" || (document.activeElement && document.activeElement.isContentEditable);
+}
+function setButtonShortcutTitles(){
+  const pairs = {btnAddNode:"addNode", btnLinkMode:"linkMode", btnUndo:"undo", btnRedo:"redo", btnDelete:"deleteSelection", btnFilters:"filters", btnSettings:"settings", btnCases:"cases", btnExport:"exportJson", btnExportPdf:"reportPdf", btnFit:"fit", btnNotepad:"notepad", btnCluster:"cluster"};
+  Object.entries(pairs).forEach(([id, action])=>{
+    const el = document.getElementById(id);
+    if(el) el.title = `${SHORTCUT_ACTIONS[action].label} (${shortcutLabel(action)})`;
+  });
+}
+function inferRelationLabel(source, target){
+  if(!appSettings.smartRelationLabels) return "Lien";
+  const pair = [source.type, target.type].sort().join(":");
+  const rules = {
+    "email:personne":"Adresse e-mail", "personne:telephone":"Téléphone", "adresse:personne":"Adresse",
+    "personne:pseudo":"Alias", "ip:pseudo":"Connexion", "fichier:hash":"Empreinte", "fichier:geo":"Localisation",
+    "personne:societe":"Affiliation", "personne:vehicule":"Véhicule", "personne:source":"Mentionné dans",
+    "pseudo:source":"Mentionné dans", "id:personne":"Identifiant"
+  };
+  if(rules[pair]) return rules[pair];
+  if(source.type === target.type) return "Correspondance";
+  if(normVal(source.value) && normVal(source.value) === normVal(target.value)) return "Valeur commune";
+  return "Lien probable";
+}
+function edgeExists(a,b){ return edgesArr().some(e=>(e.source===a && e.target===b) || (e.source===b && e.target===a)); }
+function createSmartEdge(sourceId, targetId, opts={}){
+  if(!sourceId || !targetId || sourceId===targetId || !state.nodes[sourceId] || !state.nodes[targetId]) return null;
+  if(edgeExists(sourceId, targetId)){ showToast("Ces éléments sont déjà liés."); return null; }
+  const edge = makeEdge({source:sourceId, target:targetId, label:opts.label || inferRelationLabel(state.nodes[sourceId], state.nodes[targetId]), status:opts.status || "hypothese"});
+  state.edges[edge.id] = edge;
+  return edge;
+}
+function maybeAutoLinkTo(nodeId){
+  if(!appSettings.autoLinkAfterCreate || !pendingAutoLinkNodeId || pendingAutoLinkNodeId===nodeId) return false;
+  const edge = createSmartEdge(pendingAutoLinkNodeId, nodeId);
+  pendingAutoLinkNodeId = null;
+  if(!edge) return false;
+  selected = {kind:"edge", id:edge.id};
+  saveSoon(); renderSidebar(); renderGraph();
+  showToast(`Lien automatique créé : ${edge.label}`);
+  return true;
+}
+function runAction(action){
+  const click = id=>{ const el=document.getElementById(id); if(el) el.click(); };
+  const actions = {
+    addNode:()=>openNodeModal(null), linkMode:()=>click("btnLinkMode"), deleteSelection:()=>click("btnDelete"),
+    undo, redo, copy:copySelection, paste:pasteClipboard, search:()=>document.getElementById("search").focus(),
+    fit:()=>click("btnFit"), filters:openFiltersModal, settings:openSettingsModal, cases:openCasesModal,
+    exportJson:exportCase, reportPdf:exportPDFReport, notepad:()=>click("btnNotepad"), cluster:()=>click("btnCluster"),
+    escape:()=>{ selected=null; multiSelected=new Set(); linkMode=false; linkSourceId=null; pendingAutoLinkNodeId=null; closeModal(); renderSidebar(); renderGraph(); }
+  };
+  if(actions[action]) actions[action]();
+}
 
 // Redimensionne une image côté client avant stockage (les données sont sauvegardées en JSON, taille limitée)
 function resizeImageFile(file, maxDim, quality){
@@ -1040,14 +1178,16 @@ function pasteClipboard(){
 
 // ---------------- raccourcis clavier ----------------
 window.addEventListener("keydown", (ev)=>{
-  const tag = (document.activeElement && document.activeElement.tagName) || "";
-  const inField = tag==="INPUT" || tag==="TEXTAREA" || tag==="SELECT";
-  const mod = ev.ctrlKey || ev.metaKey;
-  if(!inField && mod && ev.key.toLowerCase()==="z" && !ev.shiftKey){ ev.preventDefault(); undo(); return; }
-  if(!inField && mod && (ev.key.toLowerCase()==="y" || (ev.key.toLowerCase()==="z" && ev.shiftKey))){ ev.preventDefault(); redo(); return; }
-  if(!inField && mod && ev.key.toLowerCase()==="c"){ ev.preventDefault(); copySelection(); return; }
-  if(!inField && mod && ev.key.toLowerCase()==="v"){ ev.preventDefault(); pasteClipboard(); return; }
-  if(!inField && (ev.key==="Escape")){ selected=null; multiSelected=new Set(); linkMode=false; linkSourceId=null; renderSidebar(); renderGraph(); return; }
+  const inField = isEditableTarget();
+  const shortcut = normalizeShortcut(ev);
+  if(!shortcut) return;
+
+  // Dans un champ, seuls les raccourcis globaux non textuels restent actifs.
+  const allowedInField = new Set(["escape", "settings"]);
+  const entry = Object.entries(appSettings.shortcuts || {}).find(([action, value])=>value && value===shortcut && (!inField || allowedInField.has(action)));
+  if(!entry) return;
+  ev.preventDefault();
+  runAction(entry[0]);
 });
 
 function renderGraph(){
@@ -1132,9 +1272,11 @@ function renderGraph(){
       if(!linkSourceId){ linkSourceId = d.id; renderGraph(); return; }
       if(linkSourceId === d.id){ linkSourceId=null; renderGraph(); return; }
       openEdgeModal(linkSourceId, d.id);
+      pendingAutoLinkNodeId = null;
       linkSourceId = null;
       return;
     }
+    if(maybeAutoLinkTo(d.id)) return;
     if(ev.shiftKey || ev.ctrlKey || ev.metaKey){
       if(multiSelected.size===0 && selected && selected.kind==="node") multiSelected.add(selected.id);
       if(multiSelected.has(d.id)) multiSelected.delete(d.id); else multiSelected.add(d.id);
@@ -1598,11 +1740,13 @@ function openNodeModal(linkedFrom){
     
     if(linkedFrom){
       const edgeLabelEl = document.querySelector('[data-field="m_edgelabel"]');
-      const edge = makeEdge({source:linkedFrom.id, target:n.id, label: edgeLabelEl? edgeLabelEl.value : "Lien"});
+      const edge = makeEdge({source:linkedFrom.id, target:n.id, label: edgeLabelEl? edgeLabelEl.value : inferRelationLabel(linkedFrom, n)});
       state.edges[edge.id] = edge;
     }
     selected = {kind:"node", id:n.id};
+    pendingAutoLinkNodeId = (!linkedFrom && appSettings.autoLinkAfterCreate) ? n.id : null;
     saveSoon(); closeModal(); renderSidebar(); renderGraph();
+    if(pendingAutoLinkNodeId) showToast("Élément créé — sélectionne un autre élément pour créer automatiquement un lien.");
   });
 }
 function openQuickLinkedNodeModal(fromNode){ openNodeModal(fromNode); }
@@ -1633,6 +1777,47 @@ function openEdgeModal(sourceId, targetId){
     state.edges[edge.id] = edge;
     selected = {kind:"edge", id:edge.id};
     saveSoon(); closeModal(); renderSidebar(); renderGraph();
+  });
+}
+
+
+function openSettingsModal(){
+  let html = `<h3>Paramètres</h3>`;
+  html += `<div class="settings-grid">
+    <label class="setting-row"><span><strong>Liaison automatique après création</strong><span>Après l'ajout d'un élément, le prochain élément sélectionné est relié automatiquement avec une relation inférée.</span></span><input type="checkbox" id="setAutoLink" ${appSettings.autoLinkAfterCreate?'checked':''}></label>
+    <label class="setting-row"><span><strong>Libellés de relation intelligents</strong><span>Déduit la nature du lien à partir des types d'éléments : alias, téléphone, affiliation, empreinte, etc.</span></span><input type="checkbox" id="setSmartLabels" ${appSettings.smartRelationLabels?'checked':''}></label>
+  </div>`;
+  html += `<div class="panel-title">Raccourcis personnalisables</div><div class="shortcut-list">`;
+  Object.entries(SHORTCUT_ACTIONS).forEach(([key, meta])=>{
+    html += `<div class="shortcut-row"><label for="sc_${key}">${escapeHtml(meta.label)}</label><input id="sc_${key}" class="shortcut-input" data-shortcut-action="${key}" readonly value="${escapeHtml(shortcutLabel(key))}" title="Clique puis presse la combinaison souhaitée"></div>`;
+  });
+  html += `</div><div class="architecture-note"><strong>Architecture fonctionnelle.</strong> Les actions applicatives sont centralisées dans un registre unique, utilisé à la fois par l'interface, les titres d'aide et le gestionnaire clavier. Cette base rend l'application plus maintenable et prépare une extraction future en modules sans casser le déploiement Cloudflare Pages statique.</div>`;
+  html += `<div class="modal-actions"><button class="btn" id="mResetShortcuts">Raccourcis par défaut</button><button class="btn primary" id="mCloseSettings">Fermer</button></div>`;
+  openModal(html);
+
+  document.getElementById("setAutoLink").addEventListener("change", async e=>{ appSettings.autoLinkAfterCreate = e.target.checked; if(!e.target.checked) pendingAutoLinkNodeId=null; await saveSettings(); });
+  document.getElementById("setSmartLabels").addEventListener("change", async e=>{ appSettings.smartRelationLabels = e.target.checked; await saveSettings(); });
+  document.getElementById("mCloseSettings").addEventListener("click", closeModal);
+  document.getElementById("mResetShortcuts").addEventListener("click", async ()=>{
+    appSettings.shortcuts = defaultSettings().shortcuts;
+    await saveSettings(); setButtonShortcutTitles(); closeModal(); openSettingsModal(); showToast("Raccourcis restaurés.");
+  });
+  document.querySelectorAll("[data-shortcut-action]").forEach(input=>{
+    input.addEventListener("focus", ()=>input.classList.add("capturing"));
+    input.addEventListener("click", ()=>{ input.focus(); input.select(); });
+    input.addEventListener("keydown", async ev=>{
+      ev.preventDefault();
+      const val = normalizeShortcut(ev);
+      if(!val) return;
+      const action = input.getAttribute("data-shortcut-action");
+      const duplicate = Object.entries(appSettings.shortcuts).find(([k,v])=>k!==action && v===val);
+      if(duplicate && !confirm(`Le raccourci ${val} est déjà affecté à « ${SHORTCUT_ACTIONS[duplicate[0]].label} ». Le remplacer ?`)) return;
+      if(duplicate) appSettings.shortcuts[duplicate[0]] = "";
+      appSettings.shortcuts[action] = val;
+      input.value = val; input.classList.remove("capturing");
+      await saveSettings(); setButtonShortcutTitles(); showToast("Raccourci mis à jour.");
+    });
+    input.addEventListener("blur", ()=>input.classList.remove("capturing"));
   });
 }
 
@@ -2270,6 +2455,7 @@ function initToolbar(){
   document.getElementById("btnUndo").addEventListener("click", undo);
   document.getElementById("btnRedo").addEventListener("click", redo);
   document.getElementById("btnFilters").addEventListener("click", openFiltersModal);
+  document.getElementById("btnSettings").addEventListener("click", openSettingsModal);
   document.getElementById("btnVersions").addEventListener("click", openVersionsModal);
   document.getElementById("btnCluster").addEventListener("click", ()=>{
     clusterMode = !clusterMode;
@@ -2311,6 +2497,7 @@ function initToolbar(){
 // ---------------- boot ----------------
 (async function init(){
   state = await loadState();
+  appSettings = await loadSettings();
   document.getElementById("caseName").value = state.caseName;
   historyStack = [JSON.stringify({nodes:state.nodes, edges:state.edges})];
   historyIndex = 0;
@@ -2320,6 +2507,7 @@ function initToolbar(){
   initToolbar();
   initToolsMenu();
   initNotepad();
+  setButtonShortcutTitles();
   updateCenter();
   renderSidebar();
   renderGraph();

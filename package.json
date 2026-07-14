@@ -1,0 +1,15 @@
+{
+  "name": "relation-p",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Application statique de cartographie d'investigation compatible Cloudflare Pages.",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "dev:pages": "npx wrangler pages dev . --compatibility-date=2026-07-14",
+    "test": "node tools/check.js",
+    "check": "node tools/check.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
