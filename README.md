@@ -8,7 +8,7 @@ Relation est une application statique de cartographie d’investigation/OSINT, p
 - Création intelligente de liens : après l’ajout d’un élément, sélectionner un autre élément peut créer automatiquement une relation contextualisée.
 - Raccourcis clavier pour les actions importantes, entièrement personnalisables depuis **Paramètres**.
 - Paramètres accessibles depuis la topbar, à côté des outils OSINT.
-- Multi-dossiers, historique de versions, import/export JSON, export PNG, rapport PDF et client autonome.
+- Multi-dossiers, timeline, vue tableau, audit qualité, historique de versions, import/export JSON/CSV, export PNG, rapport PDF et client autonome.
 - Données conservées localement dans le navigateur.
 
 ## Tests locaux

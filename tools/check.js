@@ -15,6 +15,13 @@ assert(html.includes('const SHORTCUT_ACTIONS'), 'Le registre central des raccour
 assert(html.includes('function openSettingsModal'), 'La modale Paramètres doit être câblée.');
 assert(html.includes('function createSmartEdge'), 'La création intelligente de liens doit être présente.');
 assert(html.includes('function maybeAutoLinkTo'), 'La liaison automatique après création doit être présente.');
+assert(html.includes('function openTimelineModal'), 'La vue chronologie doit être présente.');
+assert(html.includes('function openTableViewModal'), 'La vue tableau doit être présente.');
+assert(html.includes('function openAuditModal'), 'L’audit qualité doit être présent.');
+assert(html.includes('function exportNodesCSV'), 'L’export CSV des éléments doit être présent.');
+assert(html.includes('id="btnTimeline"'), 'Le bouton Chronologie doit être présent dans la topbar.');
+assert(html.includes('id="btnTableView"'), 'Le bouton Vue tableau doit être présent dans la topbar.');
+assert(html.includes('id="btnAudit"'), 'Le bouton Audit doit être présent dans la topbar.');
 assert(fs.existsSync('_headers'), 'Le fichier _headers Cloudflare Pages doit exister.');
 
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
@@ -44,4 +51,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Checks locaux OK : HTML, script embarqué, paramètres, raccourcis, liaison intelligente et _headers.');
+console.log("Checks locaux OK : HTML, script embarqué, paramètres, raccourcis, vues d'enquête, CSV, liaison intelligente et _headers.");

@@ -190,7 +190,39 @@
     flex-direction:column;color:var(--ink-dim);text-align:center;padding:20px;}
   .empty-state .glyph{font-size:30px;color:var(--ink-faint);margin-bottom:12px;}
   .empty-state h2{color:var(--ink);font-size:16px;margin:0 0 8px;}
-  .empty-state p{font-size:13px;max-width:380px;line-height:1.6;margin:0 0 16px;}
+  .empty-state p{font-size:13px;max-width:480px;line-height:1.6;margin:0 0 16px;}
+  .welcome-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+  .welcome-kpis{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:8px;width:min(560px,90vw);}
+  .welcome-kpi{background:rgba(23,28,35,.86);border:1px solid var(--hairline);border-radius:var(--radius);padding:10px;}
+  .welcome-kpi strong{display:block;color:var(--ink);font-family:var(--font-mono);font-size:16px;margin-bottom:3px;}
+  .welcome-kpi span{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;}
+
+  .data-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .data-table th,.data-table td{border-bottom:1px solid var(--hairline);padding:8px 7px;text-align:left;vertical-align:top;}
+  .data-table th{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:var(--card);position:sticky;top:0;}
+  .data-table tr{cursor:pointer;}
+  .data-table tr:hover td{background:var(--card-hover);}
+  .table-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+  .table-toolbar input,.table-toolbar select{background:var(--card);border:1px solid var(--hairline);color:var(--ink);border-radius:var(--radius);padding:7px 9px;font-size:12px;}
+  .modal.wide{width:min(980px,94vw);}
+  .modal.full{width:min(1180px,96vw);}
+  .timeline{position:relative;margin:6px 0 0 8px;padding-left:18px;border-left:1px solid var(--hairline);}
+  .timeline-item{position:relative;background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius);padding:10px 12px;margin:0 0 9px;cursor:pointer;}
+  .timeline-item::before{content:"";position:absolute;left:-24px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--void);}
+  .timeline-item:hover{border-color:var(--accent);}
+  .timeline-date{font-family:var(--font-mono);font-size:10.5px;color:var(--accent);margin-bottom:4px;}
+  .timeline-title{font-weight:700;font-size:13px;color:var(--ink);}
+  .timeline-meta{font-size:11.5px;color:var(--ink-dim);margin-top:4px;}
+  .audit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px;}
+  .audit-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius);padding:12px;}
+  .audit-card strong{font-family:var(--font-mono);font-size:20px;color:var(--accent);display:block;}
+  .audit-card span{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em;}
+  .audit-issue{background:var(--card);border:1px solid var(--hairline);border-left:3px solid var(--accent);border-radius:var(--radius);padding:9px 11px;margin-bottom:7px;font-size:12.5px;cursor:pointer;}
+  .audit-issue.high{border-left-color:var(--excluded);}
+  .audit-issue.medium{border-left-color:var(--uncertain);}
+  .audit-issue:hover{background:var(--card-hover);}
+  .audit-issue b{color:var(--ink);}
+  .audit-issue small{display:block;color:var(--ink-faint);font-family:var(--font-mono);margin-top:3px;}
 
   /* ---- photo / attachments ---- */
   .photo-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
@@ -347,6 +379,9 @@
     <button class="icon-btn" id="btnUndo" title="Annuler (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
     <button class="icon-btn" id="btnRedo" title="Rétablir (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
     <button class="icon-btn" id="btnCluster" title="Regrouper visuellement par tag"><i class="fa-solid fa-draw-polygon"></i></button>
+    <button class="icon-btn" id="btnTimeline" title="Chronologie"><i class="fa-solid fa-timeline"></i></button>
+    <button class="icon-btn" id="btnTableView" title="Vue tableau"><i class="fa-solid fa-table-list"></i></button>
+    <button class="icon-btn" id="btnAudit" title="Audit qualité des données"><i class="fa-solid fa-shield-halved"></i></button>
     <div class="toolbar-group" aria-label="Outils et paramètres">
       <div class="tools-dropdown">
         <button class="icon-btn" id="btnTools" title="Outils OSINT externes"><i class="fa-solid fa-toolbox"></i></button>
@@ -363,6 +398,7 @@
     <button class="icon-btn" id="btnImport" title="Importer"><i class="fa-solid fa-folder-open"></i></button>
     <input type="file" id="fileInput" accept="application/json,.osintree,.json">
     <button class="icon-btn" id="btnExport" title="Exporter en JSON"><i class="fa-solid fa-download"></i></button>
+    <button class="icon-btn" id="btnExportCsv" title="Exporter en CSV"><i class="fa-solid fa-file-csv"></i></button>
     <button class="icon-btn" id="btnExportPng" title="Exporter en image PNG"><i class="fa-solid fa-camera"></i></button>
     <button class="btn primary" id="btnExportPdf" title="Générer un rapport PDF automatique"><i class="fa-solid fa-file-pdf"></i> Rapport PDF</button>
     <button class="btn" id="btnDownloadClient" title="Télécharger une copie autonome de l'application, utilisable hors-ligne et indépendante de ce site"><i class="fa-solid fa-laptop-code"></i> Client hors-ligne</button>
@@ -377,9 +413,18 @@
       <svg id="graph"></svg>
       <div class="empty-state" id="emptyState">
         <div class="glyph"><i class="fa-solid fa-diagram-project"></i></div>
-        <h2>Aucun élément pour l'instant</h2>
-        <p>Ajoute ta première entrée — une personne, un pseudo, une IP — puis relie les éléments entre eux au fur et à mesure que tu trouves des correspondances.</p>
-        <button class="btn primary" id="btnAddNodeEmpty"><i class="fa-solid fa-plus"></i> Ajouter un élément</button>
+        <h2>Bienvenue dans Relation</h2>
+        <p>Construis une enquête claire : ajoute des éléments, relie-les intelligemment, contrôle la qualité des données puis exporte ton dossier.</p>
+        <div class="welcome-actions">
+          <button class="btn primary" id="btnAddNodeEmpty"><i class="fa-solid fa-plus"></i> Ajouter un élément</button>
+          <button class="btn" id="btnImportEmpty"><i class="fa-solid fa-folder-open"></i> Importer un dossier</button>
+          <button class="btn" id="btnAuditEmpty"><i class="fa-solid fa-shield-halved"></i> Voir l'audit</button>
+        </div>
+        <div class="welcome-kpis">
+          <div class="welcome-kpi"><strong>01</strong><span>Collecter</span></div>
+          <div class="welcome-kpi"><strong>02</strong><span>Relier</span></div>
+          <div class="welcome-kpi"><strong>03</strong><span>Exporter</span></div>
+        </div>
       </div>
     </div>
     <div class="sidebar" id="sidebar"></div>
@@ -485,6 +530,10 @@ const SHORTCUT_ACTIONS = {
   reportPdf:{label:"Rapport PDF", default:"Ctrl+Shift+P"},
   notepad:{label:"Bloc-notes", default:"Ctrl+Shift+N"},
   cluster:{label:"Regroupement par tag", default:"Ctrl+G"},
+  timeline:{label:"Chronologie", default:"T"},
+  tableView:{label:"Vue tableau", default:"Shift+T"},
+  audit:{label:"Audit qualité", default:"A"},
+  exportCsv:{label:"Exporter CSV", default:"Shift+E"},
   escape:{label:"Fermer / désélectionner", default:"Escape"}
 };
 
@@ -798,7 +847,7 @@ function isEditableTarget(){
   return tag==="INPUT" || tag==="TEXTAREA" || tag==="SELECT" || (document.activeElement && document.activeElement.isContentEditable);
 }
 function setButtonShortcutTitles(){
-  const pairs = {btnAddNode:"addNode", btnLinkMode:"linkMode", btnUndo:"undo", btnRedo:"redo", btnDelete:"deleteSelection", btnFilters:"filters", btnSettings:"settings", btnCases:"cases", btnExport:"exportJson", btnExportPdf:"reportPdf", btnFit:"fit", btnNotepad:"notepad", btnCluster:"cluster"};
+  const pairs = {btnAddNode:"addNode", btnLinkMode:"linkMode", btnUndo:"undo", btnRedo:"redo", btnDelete:"deleteSelection", btnFilters:"filters", btnSettings:"settings", btnCases:"cases", btnExport:"exportJson", btnExportPdf:"reportPdf", btnFit:"fit", btnNotepad:"notepad", btnCluster:"cluster", btnTimeline:"timeline", btnTableView:"tableView", btnAudit:"audit", btnExportCsv:"exportCsv"};
   Object.entries(pairs).forEach(([id, action])=>{
     const el = document.getElementById(id);
     if(el) el.title = `${SHORTCUT_ACTIONS[action].label} (${shortcutLabel(action)})`;
@@ -842,7 +891,7 @@ function runAction(action){
     addNode:()=>openNodeModal(null), linkMode:()=>click("btnLinkMode"), deleteSelection:()=>click("btnDelete"),
     undo, redo, copy:copySelection, paste:pasteClipboard, search:()=>document.getElementById("search").focus(),
     fit:()=>click("btnFit"), filters:openFiltersModal, settings:openSettingsModal, cases:openCasesModal,
-    exportJson:exportCase, reportPdf:exportPDFReport, notepad:()=>click("btnNotepad"), cluster:()=>click("btnCluster"),
+    exportJson:exportCase, exportCsv:exportCSVBundle, reportPdf:exportPDFReport, notepad:()=>click("btnNotepad"), cluster:()=>click("btnCluster"), timeline:openTimelineModal, tableView:openTableViewModal, audit:openAuditModal,
     escape:()=>{ selected=null; multiSelected=new Set(); linkMode=false; linkSourceId=null; pendingAutoLinkNodeId=null; closeModal(); renderSidebar(); renderGraph(); }
   };
   if(actions[action]) actions[action]();
@@ -1702,7 +1751,10 @@ function openModal(html){
   document.getElementById("modalBody").innerHTML = html;
   document.getElementById("modalOverlay").classList.add("show");
 }
-function closeModal(){ document.getElementById("modalOverlay").classList.remove("show"); }
+function closeModal(){
+  document.getElementById("modalOverlay").classList.remove("show");
+  document.getElementById("modalBody").classList.remove("wide","full");
+}
 document.getElementById("modalOverlay").addEventListener("click", e=>{ if(e.target.id==="modalOverlay") closeModal(); });
 
 function openNodeModal(linkedFrom){
@@ -1959,6 +2011,96 @@ function openFiltersModal(){
     };
     closeModal(); renderGraph(); showToast("Filtres appliqués.");
   });
+}
+
+
+// ---------------- vues d'analyse : timeline, tableau, audit ----------------
+function nodeDisplayName(node){ return node ? (node.label || node.value || "(sans nom)") : "?"; }
+function typeLabel(type){ return (TYPES[type]||TYPES.note).label; }
+function statusLabel(status){ return (STATUSES[status]||STATUSES.attente).label; }
+function csvEscape(value){ return '"' + String(value ?? "").replace(/"/g,'""').replace(/\r?\n/g," ") + '"'; }
+function downloadTextFile(filename, content, type){
+  const blob = new Blob([content], {type:type||"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+function timelineEvents(){
+  const events = [];
+  nodesArr().forEach(n=>{
+    events.push({kind:"node", id:n.id, ts:n.createdAt, title:`Élément créé · ${nodeDisplayName(n)}`, meta:`${typeLabel(n.type)} · ${statusLabel(n.status)}`});
+    if(n.updatedAt && n.updatedAt !== n.createdAt) events.push({kind:"node", id:n.id, ts:n.updatedAt, title:`Élément modifié · ${nodeDisplayName(n)}`, meta:`${typeLabel(n.type)} · ${statusLabel(n.status)}`});
+  });
+  edgesArr().forEach(e=>{
+    const s = state.nodes[e.source], t = state.nodes[e.target];
+    events.push({kind:"edge", id:e.id, ts:e.createdAt, title:`Lien créé · ${e.label||"Lien"}`, meta:`${nodeDisplayName(s)} ⟷ ${nodeDisplayName(t)} · ${(EDGE_STATUSES[e.status]||EDGE_STATUSES.confirme).label}`});
+  });
+  return events.filter(e=>e.ts).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+}
+function focusEntity(kind, id){
+  if(kind==="node" && state.nodes[id]) selected = {kind:"node", id};
+  if(kind==="edge" && state.edges[id]) selected = {kind:"edge", id};
+  closeModal(); renderSidebar(); renderGraph();
+}
+function openTimelineModal(){
+  const events = timelineEvents();
+  let html = `<h3>Chronologie de l'enquête</h3>`;
+  html += `<p style="font-size:12px;color:var(--ink-dim);margin:0 0 12px;">${events.length} événement(s), du plus récent au plus ancien.</p>`;
+  if(!events.length) html += `<p class="insp-empty">Aucun événement : ajoute un premier élément pour alimenter la chronologie.</p>`;
+  else html += `<div class="timeline">${events.map(e=>`<div class="timeline-item" data-focus-kind="${e.kind}" data-focus-id="${e.id}"><div class="timeline-date">${fmtDate(e.ts)}</div><div class="timeline-title">${escapeHtml(e.title)}</div><div class="timeline-meta">${escapeHtml(e.meta)}</div></div>`).join("")}</div>`;
+  html += `<div class="modal-actions"><button class="btn" id="mCancel">Fermer</button></div>`;
+  openModal(html); document.getElementById("modalBody").classList.add("wide");
+  document.getElementById("mCancel").addEventListener("click", closeModal);
+  document.querySelectorAll("[data-focus-kind]").forEach(el=>el.addEventListener("click",()=>focusEntity(el.getAttribute("data-focus-kind"), el.getAttribute("data-focus-id"))));
+}
+function openTableViewModal(){
+  let html = `<h3>Vue tableau</h3>`;
+  html += `<div class="table-toolbar"><input id="tblSearch" placeholder="Filtrer…" spellcheck="false"><select id="tblType"><option value="">Tous les types</option>${Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join("")}</select><select id="tblStatus"><option value="">Tous les statuts</option>${Object.entries(STATUSES).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join("")}</select><button class="btn" id="tblCsv"><i class="fa-solid fa-file-csv"></i> Export CSV</button></div>`;
+  html += `<div style="max-height:62vh;overflow:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Nom</th><th>Valeur</th><th>Statut</th><th>Tags</th><th>Liens</th><th>Créé</th></tr></thead><tbody id="tblBody"></tbody></table></div>`;
+  html += `<div class="modal-actions"><button class="btn" id="mCancel">Fermer</button></div>`;
+  openModal(html); document.getElementById("modalBody").classList.add("full");
+  const renderRows = ()=>{
+    const q = document.getElementById("tblSearch").value.trim().toLowerCase();
+    const type = document.getElementById("tblType").value, status = document.getElementById("tblStatus").value;
+    const rows = nodesArr().filter(n=>(!type||n.type===type)&&(!status||n.status===status)&&(!q || (nodeDisplayName(n)+" "+(n.value||"")+" "+(n.tags||[]).join(" ")).toLowerCase().includes(q)))
+      .sort((a,b)=>nodeDisplayName(a).localeCompare(nodeDisplayName(b),'fr'));
+    document.getElementById("tblBody").innerHTML = rows.map(n=>`<tr data-node-id="${n.id}"><td>${escapeHtml(typeLabel(n.type))}</td><td>${escapeHtml(nodeDisplayName(n))}</td><td>${escapeHtml(n.value||"")}</td><td>${escapeHtml(statusLabel(n.status))}</td><td>${escapeHtml((n.tags||[]).join(", "))}</td><td>${edgesOf(n.id).length}</td><td>${fmtDate(n.createdAt)}</td></tr>`).join("") || `<tr><td colspan="7" style="color:var(--ink-faint);">Aucun résultat.</td></tr>`;
+    document.querySelectorAll("[data-node-id]").forEach(el=>el.addEventListener("click",()=>focusEntity("node", el.getAttribute("data-node-id"))));
+  };
+  ["tblSearch","tblType","tblStatus"].forEach(id=>document.getElementById(id).addEventListener("input", renderRows));
+  document.getElementById("tblCsv").addEventListener("click", exportNodesCSV);
+  document.getElementById("mCancel").addEventListener("click", closeModal);
+  renderRows();
+}
+function auditIssues(){
+  const issues = [];
+  nodesArr().forEach(n=>{
+    const name = nodeDisplayName(n);
+    if(!n.value && n.type!=="note") issues.push({level:"medium", kind:"node", id:n.id, title:`${name} n'a pas de valeur exploitable`, detail:`Type : ${typeLabel(n.type)}`});
+    if(!(n.sources||"").trim()) issues.push({level:n.status==="confirme"?"high":"medium", kind:"node", id:n.id, title:`${name} n'a pas de source`, detail:`Statut : ${statusLabel(n.status)}`});
+    if(edgesOf(n.id).length===0) issues.push({level:"medium", kind:"node", id:n.id, title:`${name} est isolé`, detail:"Aucun lien avec le reste du graphe"});
+    if(n.type==="fichier" && !(n.metadata && n.metadata.sha256)) issues.push({level:"high", kind:"node", id:n.id, title:`${name} est une preuve sans empreinte`, detail:"Analyse forensique recommandée"});
+  });
+  edgesArr().forEach(e=>{ if(!state.nodes[e.source] || !state.nodes[e.target]) issues.push({level:"high", kind:"edge", id:e.id, title:`Lien orphelin : ${e.label||"Lien"}`, detail:"Source ou cible manquante"}); });
+  const seen = new Map();
+  nodesArr().forEach(n=>{ const v=normVal(n.value); if(!v) return; if(seen.has(v)){ issues.push({level:"medium", kind:"node", id:n.id, title:`Doublon possible : ${n.value}`, detail:`Même valeur que ${nodeDisplayName(seen.get(v))}`}); } else seen.set(v,n); });
+  return issues;
+}
+function openAuditModal(){
+  const issues = auditIssues();
+  const isolated = nodesArr().filter(n=>edgesOf(n.id).length===0).length;
+  const sourced = nodesArr().filter(n=>(n.sources||"").trim()).length;
+  let html = `<h3>Audit qualité des données</h3>`;
+  html += `<div class="audit-grid"><div class="audit-card"><strong>${nodesArr().length}</strong><span>Éléments</span></div><div class="audit-card"><strong>${edgesArr().length}</strong><span>Liens</span></div><div class="audit-card"><strong>${issues.length}</strong><span>Points à vérifier</span></div><div class="audit-card"><strong>${isolated}</strong><span>Isolés</span></div><div class="audit-card"><strong>${sourced}</strong><span>Avec source</span></div></div>`;
+  if(!issues.length) html += `<p class="insp-empty">Aucun point critique détecté. Le dossier est propre selon les règles actuelles.</p>`;
+  else html += issues.map(i=>`<div class="audit-issue ${i.level}" data-focus-kind="${i.kind}" data-focus-id="${i.id}"><b>${escapeHtml(i.title)}</b><small>${escapeHtml(i.detail)}</small></div>`).join("");
+  html += `<div class="modal-actions"><button class="btn" id="auditCsv"><i class="fa-solid fa-file-csv"></i> Exporter l'audit CSV</button><button class="btn primary" id="mCancel">Fermer</button></div>`;
+  openModal(html); document.getElementById("modalBody").classList.add("wide");
+  document.getElementById("mCancel").addEventListener("click", closeModal);
+  document.getElementById("auditCsv").addEventListener("click", exportAuditCSV);
+  document.querySelectorAll("[data-focus-kind]").forEach(el=>el.addEventListener("click",()=>focusEntity(el.getAttribute("data-focus-kind"), el.getAttribute("data-focus-id"))));
 }
 
 // ---------------- historique des versions ----------------
@@ -2336,6 +2478,39 @@ function exportCase(){
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   showToast("Export généré : " + a.download);
 }
+
+function exportNodesCSV(){
+  const header = ["id","type","label","value","status","tags","sources","notes","createdAt","updatedAt","links"];
+  const rows = nodesArr().map(n=>[
+    n.id, typeLabel(n.type), n.label||"", n.value||"", statusLabel(n.status), (n.tags||[]).join("; "),
+    (n.sources||"").trim(), n.notes||"", n.createdAt||"", n.updatedAt||"", edgesOf(n.id).length
+  ]);
+  const csv = [header, ...rows].map(row=>row.map(csvEscape).join(",")).join("\n");
+  downloadTextFile(`${caseSlug()}-elements.csv`, csv, "text/csv;charset=utf-8");
+  showToast("CSV éléments exporté.");
+}
+function exportEdgesCSV(){
+  const header = ["id","sourceId","sourceLabel","targetId","targetLabel","label","status","notes","createdAt"];
+  const rows = edgesArr().map(e=>{
+    const s = state.nodes[e.source], t = state.nodes[e.target];
+    return [e.id, e.source, nodeDisplayName(s), e.target, nodeDisplayName(t), e.label||"", (EDGE_STATUSES[e.status]||EDGE_STATUSES.confirme).label, e.notes||"", e.createdAt||""];
+  });
+  const csv = [header, ...rows].map(row=>row.map(csvEscape).join(",")).join("\n");
+  downloadTextFile(`${caseSlug()}-liens.csv`, csv, "text/csv;charset=utf-8");
+  showToast("CSV liens exporté.");
+}
+function exportAuditCSV(){
+  const header = ["niveau","type","id","titre","detail"];
+  const rows = auditIssues().map(i=>[i.level, i.kind, i.id, i.title, i.detail]);
+  const csv = [header, ...rows].map(row=>row.map(csvEscape).join(",")).join("\n");
+  downloadTextFile(`${caseSlug()}-audit.csv`, csv, "text/csv;charset=utf-8");
+  showToast("CSV audit exporté.");
+}
+function exportCSVBundle(){
+  exportNodesCSV();
+  setTimeout(exportEdgesCSV, 250);
+}
+
 function importCase(file){
   const reader = new FileReader();
   reader.onload = ()=>{
@@ -2448,7 +2623,13 @@ function initToolbar(){
   document.getElementById("search").addEventListener("input", e=>{ searchTerm = e.target.value; renderGraph(); });
   document.getElementById("btnAddNode").addEventListener("click", ()=> openNodeModal(null));
   document.getElementById("btnAddNodeEmpty").addEventListener("click", ()=> openNodeModal(null));
+  document.getElementById("btnImportEmpty").addEventListener("click", ()=> document.getElementById("fileInput").click());
+  document.getElementById("btnAuditEmpty").addEventListener("click", openAuditModal);
+  document.getElementById("btnTimeline").addEventListener("click", openTimelineModal);
+  document.getElementById("btnTableView").addEventListener("click", openTableViewModal);
+  document.getElementById("btnAudit").addEventListener("click", openAuditModal);
   document.getElementById("btnExport").addEventListener("click", exportCase);
+  document.getElementById("btnExportCsv").addEventListener("click", exportCSVBundle);
   document.getElementById("btnExportPng").addEventListener("click", exportGraphPNG);
   document.getElementById("btnExportPdf").addEventListener("click", exportPDFReport);
   document.getElementById("btnDownloadClient").addEventListener("click", downloadStandaloneClient);
