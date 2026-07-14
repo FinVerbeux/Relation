@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DOSSIER — Investigation</title>
+<title>Relation — Cartographie d'investigation</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
@@ -270,6 +270,39 @@
     border:1px solid var(--hairline);border-radius:var(--radius);padding:9px 12px;margin-bottom:6px;}
   .version-item .vi-meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);}
   .version-item .vi-meta b{color:var(--ink);}
+
+  /* ---- outils externes (menu déroulant) ---- */
+  .tools-dropdown{position:relative;}
+  .tools-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:230px;background:var(--panel);
+    border:1px solid var(--hairline);border-radius:6px;box-shadow:0 10px 28px rgba(0,0,0,.5);
+    padding:6px;display:none;z-index:80;}
+  .tools-menu.open{display:block;}
+  .tools-menu a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:4px;
+    color:var(--ink-dim);text-decoration:none;font-size:12.5px;}
+  .tools-menu a:hover{background:var(--card-hover);color:var(--ink);}
+  .tools-menu a i{width:14px;text-align:center;color:var(--accent);flex-shrink:0;}
+  .tools-menu .tm-title{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-faint);padding:6px 10px 4px;}
+  .tools-menu .tm-sep{height:1px;background:var(--hairline);margin:4px 2px;}
+
+  /* ---- bloc-notes flottant (fenêtre façon "bureau") ---- */
+  .notepad-window{position:fixed;width:300px;height:260px;min-width:220px;min-height:160px;
+    max-width:80vw;max-height:80vh;background:var(--panel);border:1px solid var(--hairline);
+    border-radius:8px;box-shadow:0 12px 36px rgba(0,0,0,.55);display:none;flex-direction:column;
+    z-index:60;resize:both;overflow:hidden;}
+  .notepad-window.open{display:flex;}
+  .notepad-header{cursor:move;user-select:none;display:flex;align-items:center;justify-content:space-between;
+    gap:8px;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--hairline);
+    border-radius:8px 8px 0 0;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--accent);flex-shrink:0;}
+  .notepad-header .npd-title{display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .notepad-header button{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:12px;
+    padding:2px 4px;flex-shrink:0;}
+  .notepad-header button:hover{color:var(--excluded);}
+  .notepad-body{flex:1;min-height:0;}
+  .notepad-body textarea{width:100%;height:100%;border:none;resize:none;background:var(--void);
+    color:var(--ink);font-family:var(--font-mono);font-size:12.5px;padding:10px;outline:none;
+    line-height:1.55;box-sizing:border-box;}
 </style>
 </head>
 <body>
@@ -278,7 +311,7 @@
     <span id="loaderText">Analyse en cours…</span></div>
 
   <div class="topbar">
-    <div class="brand"><i class="fa-solid fa-diagram-project"></i>Investigation
+    <div class="brand"><i class="fa-solid fa-diagram-project"></i>Relation
       <span class="cnt" id="cntNodes">0n</span><span class="cnt" id="cntEdges">0e</span>
     </div>
     <input class="case-name" id="caseName" spellcheck="false" value="Enquête sans titre">
@@ -297,6 +330,11 @@
     <button class="icon-btn" id="btnUndo" title="Annuler (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
     <button class="icon-btn" id="btnRedo" title="Rétablir (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
     <button class="icon-btn" id="btnCluster" title="Regrouper visuellement par tag"><i class="fa-solid fa-draw-polygon"></i></button>
+    <div class="tools-dropdown">
+      <button class="icon-btn" id="btnTools" title="Outils OSINT externes"><i class="fa-solid fa-toolbox"></i></button>
+      <div class="tools-menu" id="toolsMenu"></div>
+    </div>
+    <button class="icon-btn" id="btnNotepad" title="Bloc-notes flottant"><i class="fa-solid fa-note-sticky"></i></button>
     <div class="spacer"></div>
     <div class="search-wrap"><input id="search" type="text" placeholder="Rechercher…" spellcheck="false"></div>
     <button class="icon-btn" id="btnFilters" title="Filtres avancés"><i class="fa-solid fa-filter"></i></button>
@@ -325,6 +363,14 @@
       </div>
     </div>
     <div class="sidebar" id="sidebar"></div>
+  </div>
+
+  <div class="notepad-window" id="notepadWindow">
+    <div class="notepad-header" id="notepadHeader">
+      <span class="npd-title"><i class="fa-solid fa-note-sticky"></i> Bloc-notes</span>
+      <button id="btnNotepadClose" title="Fermer"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="notepad-body"><textarea id="notepadText" spellcheck="false" placeholder="Notes libres, brouillon, pense-bête…"></textarea></div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -400,6 +446,15 @@ const EDGE_STATUSES = {
 };
 
 // Brand / app icon gallery -- key: fontawesome class
+// Liste des liens "Outils" affichés dans le menu déroulant de la topbar.
+// Modifiable librement : chaque entrée = { label, url, icon (classe Font Awesome) }.
+const EXTERNAL_TOOLS = [
+  { label:"OSINT4ALL (start.me)", url:"https://start.me/p/L1rEYQ/osint4all", icon:"fa-solid fa-layer-group" },
+  { label:"OSINT Framework", url:"https://osintframework.com/", icon:"fa-solid fa-sitemap" },
+  { label:"Bellingcat — Online Investigation Toolkit", url:"https://bellingcat.gitbook.io/toolkit", icon:"fa-solid fa-magnifying-glass" },
+  { label:"IntelTechniques Tools", url:"https://inteltechniques.com/tools/", icon:"fa-solid fa-screwdriver-wrench" }
+];
+
 const BRAND_ICONS = [
   ["steam","fa-brands fa-steam"],["instagram","fa-brands fa-instagram"],["discord","fa-brands fa-discord"],
   ["whatsapp","fa-brands fa-whatsapp"],["telegram","fa-brands fa-telegram"],["tiktok","fa-brands fa-tiktok"],
@@ -447,7 +502,10 @@ let svg, viewport, edgeLayer, nodeLayer, clusterLayer, zoomBehavior;
 function uid(p){ return (p||"n_") + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
 
 function defaultState(){
-  return { caseName:"Enquête sans titre", createdAt:new Date().toISOString(), nodes:{}, edges:{} };
+  return { caseName:"Enquête sans titre", createdAt:new Date().toISOString(), nodes:{}, edges:{}, notepad: defaultNotepad() };
+}
+function defaultNotepad(){
+  return { content:"", x:90, y:90, w:300, h:260, open:false };
 }
 function makeNode(overrides){
   const now = new Date().toISOString();
@@ -622,7 +680,8 @@ async function switchToCase(id){
   state = s; currentCaseId = id; selected = null; hiddenTypes = new Set(); multiSelected = new Set();
   historyStack = [JSON.stringify({nodes:state.nodes, edges:state.edges})]; historyIndex = 0; lastCheckpointAt = Date.now();
   document.getElementById("caseName").value = state.caseName;
-  renderSidebar(); renderGraph(); updateUndoRedoButtons();
+  if(!state.notepad) state.notepad = defaultNotepad();
+  renderSidebar(); renderGraph(); updateUndoRedoButtons(); renderNotepad();
 }
 
 async function deleteCase(id){
@@ -1911,7 +1970,7 @@ async function exportPDFReport(){
     });
 
     doc.setTextColor(...dimRGB); doc.setFont("courier","normal"); doc.setFontSize(8);
-    doc.text("Généré automatiquement — Outil de cartographie OSINT", pageW/2, pageH-15, {align:"center"});
+    doc.text("Généré automatiquement avec Relation — Outil de cartographie OSINT", pageW/2, pageH-15, {align:"center"});
 
     // ---------- Page synthèse par type ----------
     doc.addPage();
@@ -2044,7 +2103,7 @@ function downloadHtmlBlob(html){
   const blob = new Blob([html], {type:"text/html;charset=utf-8"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = "dossier-osint-client.html";
+  a.href = url; a.download = "relation-client.html";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 2000);
 }
@@ -2060,6 +2119,9 @@ function buildCleanHtmlSnapshot(){
   const loader = clone.querySelector("#loader"); if(loader) loader.style.display = "none";
   const caseNameInput = clone.querySelector("#caseName"); if(caseNameInput) caseNameInput.setAttribute("value", "Enquête sans titre");
   const emptyState = clone.querySelector("#emptyState"); if(emptyState) emptyState.removeAttribute("style");
+  const npText = clone.querySelector("#notepadText"); if(npText) npText.textContent = "";
+  const npWin = clone.querySelector("#notepadWindow"); if(npWin) npWin.classList.remove("open");
+  const toolsMenu = clone.querySelector("#toolsMenu"); if(toolsMenu) toolsMenu.classList.remove("open");
   return "<!DOCTYPE html>\n" + clone.outerHTML;
 }
 
@@ -2079,7 +2141,7 @@ function exportCase(){
   const payload = {
     format: FORMAT_NAME, version: FORMAT_VERSION,
     case: { name: state.caseName, createdAt: state.createdAt, exportedAt: new Date().toISOString() },
-    nodes: nodesArr(), edges: edgesArr()
+    nodes: nodesArr(), edges: edgesArr(), notepad: state.notepad || defaultNotepad()
   };
   const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
@@ -2101,13 +2163,98 @@ function importCase(file){
     ns.createdAt = (data.case && data.case.createdAt) || new Date().toISOString();
     data.nodes.forEach(n=>{ if(n && n.id) ns.nodes[n.id] = Object.assign(makeNode({}), n); });
     (data.edges||[]).forEach(e=>{ if(e && e.id) ns.edges[e.id] = Object.assign(makeEdge({}), e); });
+    if(data.notepad && typeof data.notepad === "object") ns.notepad = Object.assign(defaultNotepad(), data.notepad, {open:false});
     state = ns; selected = null; hiddenTypes = new Set(); multiSelected = new Set();
     historyStack = [JSON.stringify({nodes:state.nodes, edges:state.edges})]; historyIndex = 0;
     document.getElementById("caseName").value = state.caseName;
-    saveSoon(); renderSidebar(); renderGraph(); updateUndoRedoButtons();
+    saveSoon(); renderSidebar(); renderGraph(); updateUndoRedoButtons(); renderNotepad();
     showToast("Dossier importé.");
   };
   reader.readAsText(file);
+}
+
+// ---------------- menu "Outils" (liens externes) ----------------
+function renderToolsMenu(){
+  const menu = document.getElementById("toolsMenu");
+  if(!menu) return;
+  menu.innerHTML = `<div class="tm-title">Ressources OSINT</div>` +
+    EXTERNAL_TOOLS.map(t=>`<a href="${escapeHtml(t.url)}" target="_blank" rel="noopener noreferrer"><i class="${t.icon}"></i>${escapeHtml(t.label)}</a>`).join("");
+}
+function initToolsMenu(){
+  renderToolsMenu();
+  const btn = document.getElementById("btnTools");
+  const menu = document.getElementById("toolsMenu");
+  if(!btn || !menu) return;
+  btn.addEventListener("click", (ev)=>{ ev.stopPropagation(); menu.classList.toggle("open"); });
+  document.addEventListener("click", (ev)=>{ if(!menu.contains(ev.target) && ev.target!==btn) menu.classList.remove("open"); });
+}
+
+// ---------------- bloc-notes flottant (mini éditeur façon "bureau") ----------------
+function renderNotepad(){
+  const win = document.getElementById("notepadWindow");
+  const textarea = document.getElementById("notepadText");
+  if(!win || !textarea) return;
+  const np = state.notepad || (state.notepad = defaultNotepad());
+  win.style.left = np.x+"px"; win.style.top = np.y+"px";
+  win.style.width = (np.w||300)+"px"; win.style.height = (np.h||260)+"px";
+  if(document.activeElement !== textarea) textarea.value = np.content || "";
+  win.classList.toggle("open", !!np.open);
+}
+function initNotepad(){
+  const win = document.getElementById("notepadWindow");
+  const header = document.getElementById("notepadHeader");
+  const textarea = document.getElementById("notepadText");
+  const btnToggle = document.getElementById("btnNotepad");
+  const btnClose = document.getElementById("btnNotepadClose");
+  if(!win || !header || !textarea || !btnToggle || !btnClose) return;
+
+  // Position initiale sûre (dans le viewport) au premier lancement
+  if(!state.notepad) state.notepad = defaultNotepad();
+  if(state.notepad.x==null || state.notepad.x > window.innerWidth-80) state.notepad.x = 90;
+  if(state.notepad.y==null || state.notepad.y > window.innerHeight-80) state.notepad.y = 90;
+  renderNotepad();
+
+  btnToggle.addEventListener("click", ()=>{
+    state.notepad.open = !state.notepad.open;
+    win.classList.toggle("open", state.notepad.open);
+    if(state.notepad.open) textarea.focus();
+    saveSoon();
+  });
+  btnClose.addEventListener("click", ()=>{
+    state.notepad.open = false; win.classList.remove("open"); saveSoon();
+  });
+  textarea.addEventListener("input", ()=>{
+    state.notepad.content = textarea.value; saveSoon();
+  });
+
+  let dragging=false, offX=0, offY=0;
+  header.addEventListener("mousedown",(ev)=>{
+    if(ev.target.closest("button")) return;
+    dragging = true;
+    const rect = win.getBoundingClientRect();
+    offX = ev.clientX - rect.left; offY = ev.clientY - rect.top;
+    document.body.style.userSelect = "none";
+  });
+  window.addEventListener("mousemove",(ev)=>{
+    if(!dragging) return;
+    let x = ev.clientX - offX, y = ev.clientY - offY;
+    x = Math.max(4, Math.min(window.innerWidth - 60, x));
+    y = Math.max(4, Math.min(window.innerHeight - 40, y));
+    win.style.left = x+"px"; win.style.top = y+"px";
+    state.notepad.x = x; state.notepad.y = y;
+  });
+  window.addEventListener("mouseup", ()=>{
+    if(dragging){ dragging = false; document.body.style.userSelect = ""; saveSoon(); }
+  });
+
+  if(window.ResizeObserver){
+    const ro = new ResizeObserver(()=>{
+      if(!state.notepad) return;
+      state.notepad.w = win.offsetWidth; state.notepad.h = win.offsetHeight;
+      saveSoon();
+    });
+    ro.observe(win);
+  }
 }
 
 // ---------------- wiring ----------------
@@ -2168,8 +2315,11 @@ function initToolbar(){
   historyStack = [JSON.stringify({nodes:state.nodes, edges:state.edges})];
   historyIndex = 0;
   lastCheckpointAt = Date.now();
+  if(!state.notepad) state.notepad = defaultNotepad();
   initGraph();
   initToolbar();
+  initToolsMenu();
+  initNotepad();
   updateCenter();
   renderSidebar();
   renderGraph();
