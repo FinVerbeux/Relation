@@ -352,6 +352,52 @@
   .notepad-body textarea{width:100%;height:100%;border:none;resize:none;background:var(--void);
     color:var(--ink);font-family:var(--font-mono);font-size:12.5px;padding:10px;outline:none;
     line-height:1.55;box-sizing:border-box;}
+
+  /* ---- interface mobile consultation ---- */
+  .mobile-nav{display:none;}
+  @media (max-width: 760px){
+    body{overflow:hidden;}
+    .topbar{padding:8px 10px;gap:7px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+    .topbar::-webkit-scrollbar{display:none;}
+    .brand{font-size:10px;padding-right:7px;}
+    .brand .cnt{display:none;}
+    .case-name{min-width:132px;width:42vw;font-size:12px;padding:6px;}
+    #layoutSeg,#btnAddNode,#btnAnalyzeFile,#btnLinkMode,#btnUndo,#btnRedo,#btnCluster,#btnTimeline,#btnTableView,#btnAudit,
+    .tools-dropdown,#btnNotepad,.search-wrap,#btnFilters,#btnVersions,#btnImport,#btnExport,#btnExportCsv,#btnExportPng,
+    #btnExportPdf,#btnDownloadClient,#btnDelete,.save-indicator{display:none!important;}
+    #btnCases,#btnSettings,#btnFit{width:31px;height:31px;flex:0 0 auto;}
+    .main{height:calc(100vh - 48px);padding-bottom:64px;}
+    .canvas-wrap{width:100%;}
+    .hint-bar{top:8px;width:calc(100% - 22px);font-size:10px;text-align:center;}
+    .sidebar{position:fixed;left:0;right:0;bottom:0;width:100%;height:min(58vh,460px);z-index:70;
+      border-left:none;border-top:1px solid var(--hairline);border-radius:12px 12px 0 0;transform:translateY(calc(100% - 42px));
+      transition:transform .22s ease;box-shadow:0 -16px 36px rgba(0,0,0,.45);padding:14px 14px 78px;}
+    .sidebar::before{content:"Inspecteur";display:block;width:100%;text-align:center;font-family:var(--font-mono);font-size:10px;
+      letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding-bottom:10px;}
+    .sidebar.mobile-open{transform:translateY(0);}
+    .mobile-nav{position:fixed;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(5,1fr);
+      gap:6px;background:rgba(18,22,28,.96);border:1px solid var(--hairline);border-radius:14px;padding:7px;z-index:95;
+      box-shadow:0 10px 30px rgba(0,0,0,.5);backdrop-filter:blur(8px);}
+    .mobile-nav button{min-width:0;background:transparent;border:none;color:var(--ink-dim);font-size:10px;display:flex;
+      flex-direction:column;align-items:center;gap:4px;padding:6px 2px;border-radius:9px;font-family:var(--font-sans);}
+    .mobile-nav button i{font-size:14px;}
+    .mobile-nav button.active,.mobile-nav button:hover{background:var(--accent-soft);color:var(--accent);}
+    .empty-state{justify-content:flex-start;padding:54px 18px 90px;overflow-y:auto;}
+    .empty-state .glyph{font-size:24px;}
+    .empty-state h2{font-size:15px;}
+    .empty-state p{font-size:12.5px;max-width:330px;}
+    .welcome-actions{flex-direction:column;width:min(280px,90vw);}
+    .welcome-actions .btn{width:100%;}
+    .welcome-kpis{grid-template-columns:1fr;width:min(280px,90vw);}
+    .modal-overlay{align-items:stretch;justify-content:stretch;padding:8px;}
+    .modal{width:100%!important;max-width:none;max-height:none;height:calc(100vh - 16px);padding:16px 14px 82px;border-radius:12px;}
+    .modal-actions{position:sticky;bottom:-68px;background:linear-gradient(transparent,var(--panel) 22%);padding-top:18px;flex-wrap:wrap;}
+    .table-toolbar{position:sticky;top:0;background:var(--panel);z-index:2;padding-bottom:8px;}
+    .table-toolbar input,.table-toolbar select,.table-toolbar .btn{width:100%;}
+    .data-table{font-size:11.5px;min-width:720px;}
+    .timeline{margin-left:3px;}
+    .audit-grid{grid-template-columns:repeat(2,1fr);}
+  }
 </style>
 </head>
 <body>
@@ -429,6 +475,15 @@
     </div>
     <div class="sidebar" id="sidebar"></div>
   </div>
+
+
+  <nav class="mobile-nav" id="mobileNav" aria-label="Navigation mobile de consultation">
+    <button type="button" data-mobile-action="graph" class="active"><i class="fa-solid fa-diagram-project"></i><span>Graphe</span></button>
+    <button type="button" data-mobile-action="timeline"><i class="fa-solid fa-timeline"></i><span>Temps</span></button>
+    <button type="button" data-mobile-action="table"><i class="fa-solid fa-table-list"></i><span>Table</span></button>
+    <button type="button" data-mobile-action="audit"><i class="fa-solid fa-shield-halved"></i><span>Audit</span></button>
+    <button type="button" data-mobile-action="inspect"><i class="fa-solid fa-circle-info"></i><span>Détail</span></button>
+  </nav>
 
   <div class="notepad-window" id="notepadWindow">
     <div class="notepad-header" id="notepadHeader">
@@ -1005,6 +1060,35 @@ async function handleForensicFile(file){
   }
 }
 
+
+// ---------------- interface mobile de consultation ----------------
+function isMobileViewport(){ return window.matchMedia && window.matchMedia("(max-width: 760px)").matches; }
+function setMobileNavActive(action){
+  document.querySelectorAll("#mobileNav [data-mobile-action]").forEach(btn=>btn.classList.toggle("active", btn.dataset.mobileAction===action));
+}
+function toggleMobileInspector(force){
+  const sidebar = document.getElementById("sidebar");
+  if(!sidebar) return;
+  const open = force === undefined ? !sidebar.classList.contains("mobile-open") : !!force;
+  sidebar.classList.toggle("mobile-open", open);
+  setMobileNavActive(open ? "inspect" : "graph");
+}
+function initMobileInterface(){
+  const nav = document.getElementById("mobileNav");
+  if(!nav) return;
+  nav.addEventListener("click", (ev)=>{
+    const btn = ev.target.closest("[data-mobile-action]");
+    if(!btn) return;
+    const action = btn.dataset.mobileAction;
+    if(action === "graph"){ closeModal(); toggleMobileInspector(false); setMobileNavActive("graph"); if(svg) svg.transition().duration(250).call(zoomBehavior.transform, d3.zoomIdentity); return; }
+    if(action === "timeline"){ toggleMobileInspector(false); setMobileNavActive("timeline"); openTimelineModal(); return; }
+    if(action === "table"){ toggleMobileInspector(false); setMobileNavActive("table"); openTableViewModal(); return; }
+    if(action === "audit"){ toggleMobileInspector(false); setMobileNavActive("audit"); openAuditModal(); return; }
+    if(action === "inspect"){ toggleMobileInspector(); return; }
+  });
+  window.addEventListener("resize", ()=>{ if(!isMobileViewport()) toggleMobileInspector(false); });
+}
+
 // ---------------- graph setup ----------------
 function initGraph(){
   svg = d3.select("#graph");
@@ -1274,7 +1358,7 @@ function renderGraph(){
     (selected && selected.kind==="edge" && selected.id===d.id ? " selected":"") +
     (isDimmed(d.__sourceNode||{}) && isDimmed(d.__targetNode||{}) ? "":""));
   edgeAll.select(".edge-label").text(d=>d.label||"");
-  edgeAll.on("click", (ev,d)=>{ ev.stopPropagation(); selected={kind:"edge",id:d.id}; renderSidebar(); renderGraph(); });
+  edgeAll.on("click", (ev,d)=>{ ev.stopPropagation(); selected={kind:"edge",id:d.id}; renderSidebar(); renderGraph(); if(isMobileViewport()) toggleMobileInspector(true); });
   edgeAll.each(function(d){
     const dim = isDimmed(state.nodes[d.source]||{}) || isDimmed(state.nodes[d.target]||{});
     d3.select(this).classed("dimmed", dim);
@@ -1336,6 +1420,7 @@ function renderGraph(){
     multiSelected = new Set();
     selected = {kind:"node", id:d.id};
     renderSidebar(); renderGraph();
+    if(isMobileViewport()) toggleMobileInspector(true);
   });
 
   nodeAll.call(d3.drag()
@@ -2043,6 +2128,7 @@ function focusEntity(kind, id){
   if(kind==="node" && state.nodes[id]) selected = {kind:"node", id};
   if(kind==="edge" && state.edges[id]) selected = {kind:"edge", id};
   closeModal(); renderSidebar(); renderGraph();
+  if(isMobileViewport()) toggleMobileInspector(true);
 }
 function openTimelineModal(){
   const events = timelineEvents();
@@ -2688,6 +2774,7 @@ function initToolbar(){
   initToolbar();
   initToolsMenu();
   initNotepad();
+  initMobileInterface();
   setButtonShortcutTitles();
   updateCenter();
   renderSidebar();

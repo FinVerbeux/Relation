@@ -22,6 +22,9 @@ assert(html.includes('function exportNodesCSV'), 'L’export CSV des éléments 
 assert(html.includes('id="btnTimeline"'), 'Le bouton Chronologie doit être présent dans la topbar.');
 assert(html.includes('id="btnTableView"'), 'Le bouton Vue tableau doit être présent dans la topbar.');
 assert(html.includes('id="btnAudit"'), 'Le bouton Audit doit être présent dans la topbar.');
+assert(html.includes('id="mobileNav"'), 'La navigation mobile doit être présente.');
+assert(html.includes('function initMobileInterface'), 'L’interface mobile doit être initialisée.');
+assert(html.includes('@media (max-width: 760px)'), 'Les styles mobiles doivent être isolés dans une media query.');
 assert(fs.existsSync('_headers'), 'Le fichier _headers Cloudflare Pages doit exister.');
 
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
@@ -51,4 +54,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Checks locaux OK : HTML, script embarqué, paramètres, raccourcis, vues d'enquête, CSV, liaison intelligente et _headers.");
+console.log("Checks locaux OK : HTML, script embarqué, paramètres, raccourcis, vues d'enquête, CSV, mobile, liaison intelligente et _headers.");
